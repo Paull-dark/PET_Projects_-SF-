@@ -1,3 +1,0 @@
-Just created
-Second string
-3d string in sub-branch
