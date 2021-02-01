@@ -1,0 +1,106 @@
+--Задание 4.1
+
+SELECT city,
+       count(airport_code) AS airport_cnt
+FROM dst_project.airports
+GROUP BY city
+ORDER BY airport_cnt DESC
+LIMIT 3
+
+
+/*ЗАДАНИЕ 4.2
+
+Вопрос 1. Таблица рейсов содержит всю информацию о
+прошлых, текущих и запланированных рейсах.
+Сколько всего статусов для рейсов определено в таблице?
+*/
+
+SELECT count(DISTINCT f.status)
+FROM dst_project.flights AS f
+
+/*
+Вопрос 2. Какое количество самолетов находятся в воздухе
+на момент среза в базе (статус рейса «самолёт уже вылетел и находится в воздухе»).
+*/
+
+SELECT count(f.status)
+FROM dst_project.flights AS f
+WHERE f.status = 'Departed'
+
+/*
+Вопрос 3. Места определяют схему салона каждой модели.
+Сколько мест имеет самолет модели  (Boeing 777-300)?
+*/
+
+SELECT count(seat_no)
+FROM dst_project.seats
+WHERE aircraft_code = '773' 
+
+/*
+Вопрос 4. Сколько состоявшихся (фактических) рейсов было
+совершено между 1 апреля 2017 года и 1 сентября 2017 года?
+*/
+
+SELECT count(f.status)
+FROM dst_project.flights f
+WHERE (f.actual_arrival BETWEEN '2017-04-01' AND '2017-09-01')
+  AND f.status = 'Arrived'
+  
+/*
+Задание 4.3
+Вопрос 1. Сколько всего рейсов было отменено по данным базы?
+*/
+
+SELECT count(f.status)
+FROM dst_project.flights f
+WHERE f.status = 'Cancelled' 
+
+/*
+Вопрос 2. Сколько самолетов моделей типа Boeing, Sukhoi Superjet,
+Airbus находится в базе авиаперевозок?
+*/
+
+SELECT 'Airbus' AS aircraft_cnt,
+         count(a.model)
+  FROM dst_project.aircrafts a WHERE a.model like '%Airbus%'
+UNION ALL
+SELECT 'Boeing' AS aircraft_cnt,
+       count(a.model)
+FROM dst_project.aircrafts a
+WHERE a.model like '%Boeing%'
+UNION ALL
+SELECT 'Sukhoi Superjet' AS aircraft_cnt,
+       count(a.model)
+FROM dst_project.aircrafts a
+WHERE a.model like '%Sukhoi%'
+
+
+/*
+Вопрос 3. В какой части (частях) света находится больше аэропортов?
+*/
+SELECT 'Asia' AS Globe_pos,
+       count(a.timezone)
+FROM dst_project.airports a
+WHERE a.timezone like '%Asia%'
+UNION ALL
+SELECT 'Europe' AS Globe_pos,
+       count(a.timezone)
+FROM dst_project.airports a
+WHERE a.timezone like '%Europe%'
+UNION ALL
+SELECT 'Australia' AS Globe_pos,
+       count(a.timezone)
+FROM dst_project.airports a
+WHERE a.timezone like '%Australia%'
+
+/*
+Вопрос 4. У какого рейса была самая большая задержка прибытия
+за все время сбора данных? Введите id рейса (flight_id).
+*/
+SELECT f.flight_id,
+       f.flight_no,
+       f.scheduled_departure,
+       actual_arrival-scheduled_arrival AS delay
+FROM dst_project.flights f
+WHERE actual_arrival > scheduled_arrival
+ORDER BY 4 DESC
