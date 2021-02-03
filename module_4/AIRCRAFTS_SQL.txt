@@ -1,4 +1,4 @@
---Задание 4.1
+﻿--Задание 4.1
 
 SELECT city,
        count(airport_code) AS airport_cnt
@@ -193,13 +193,22 @@ WHERE (f.actual_arrival BETWEEN '2017-01-01' AND '2017-12-31')
 /*
 Вопрос 2. Сколько рейсов из Анапы вылетело зимой 2017 года?
 */
+-- Option 1
 
+SELECT count(f.status)
+FROM dst_project.flights f
+WHERE departure_airport = 'AAQ'
+  AND (date_part('year', actual_departure)=2017)
+  AND (date_part('month', actual_departure) in (12,
+                                                1,
+                                                2))
 
+-- option 2
 
-
-
-
-
+SELECT count(f.status)
+FROM dst_project.flights f
+WHERE departure_airport = 'AAQ' and(f.actual_departure BETWEEN '2017-01-01' AND '2017-03-01'
+                                    OR f.actual_departure BETWEEN '2017-12-01' AND '2017-12-31')
 
 /*
 Вопрос 3. Посчитайте количество отмененных рейсов из Анапы за все время.
@@ -232,4 +241,63 @@ JOIN dst_project.aircrafts ac ON f.aircraft_code = ac.aircraft_code
 JOIN dst_project.seats s ON s.aircraft_code = ac.aircraft_code
 WHERE f.departure_airport = 'AAQ'
 GROUP BY 1
-  
+ 
+
+
+
+DATASET PREPARATION
+
+SELECT f.flight_id,
+       f.flight_no,
+       f.arrival_airport,
+       apts.airport_name,
+       apts.longitude as arival_longitude,
+       apts.latitude as arival_latitude,
+       apts.city,
+       acrft.model,
+       sub1.total_seat_cnt,
+       EXTRACT(HOUR FROM (actual_arrival - actual_departure) ) *60
+    + EXTRACT(MINUTE FROM (actual_arrival - actual_departure) ) as time_in_air
+       
+/*
+1. Create sub-query (sub1) for counting total numb.of seats in particular aircraft_code
+2. Asign this quantity to the particular aircraft in column total_seat_cnt
+*/
+FROM
+  (SELECT s.aircraft_code,
+          ar.model,
+          count(s.seat_no) AS total_seat_cnt
+   FROM dst_project.seats s
+   JOIN dst_project.aircrafts ar ON s.aircraft_code = ar.aircraft_code
+   GROUP BY 1,
+            2) sub1
+JOIN dst_project.flights f ON sub1.aircraft_code = f.aircraft_code
+FULL JOIN dst_project.airports apts ON apts.airport_code = f.arrival_airport
+FULL JOIN dst_project.aircrafts acrft ON acrft.aircraft_code = f.aircraft_code
+WHERE f.departure_airport = 'AAQ'
+
+
+
+--how much money per flight
+select 
+    sub1.flight_id,
+    sub1.sum_per_flight,
+    sub2.occ_seats
+from 
+(
+SELECT 
+      t.flight_id,
+      sum(t.amount) as sum_per_flight
+FROM dst_project.ticket_flights t
+group by 1
+) as sub1
+left join 
+(
+--how may occupied seats in the flight
+select 
+    flight_id,
+    count(seat_no) as occ_seats
+FROM dst_project.boarding_passes
+group by 1
+) as sub2 on sub1.flight_id = sub2.flight_id
+
