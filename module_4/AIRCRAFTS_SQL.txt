@@ -253,27 +253,23 @@ SELECT f.flight_id,
        apts.airport_name,
        apts.city,
        f.scheduled_departure,
-       f.scheduled_departure,
+       f.scheduled_arrival,
        f.status,
-       apts.longitude as arival_longitude,
-       apts.latitude as arival_latitude,
+       apts.longitude AS arival_longitude,
+       apts.latitude AS arival_latitude,
        acrft.model,
        sub1.total_seat_cnt,
        sub3.occ_seats,
-       sub2.sum_per_flight,
-       EXTRACT(HOUR FROM (actual_arrival - actual_departure) ) *60
-    + EXTRACT(MINUTE FROM (actual_arrival - actual_departure) ) as time_in_air
-       
-
+       sub2.sum_per_flight, -- Actual time in the air
+ EXTRACT(HOUR
+         FROM (actual_arrival - actual_departure)) *60 + EXTRACT(MINUTE
+                                                                 FROM (actual_arrival - actual_departure)) AS time_in_air
 FROM
-  (
-/*
+  (/*
 1. Create sub-query (sub1) for counting total numb.of seats in particular aircraft_code
 2. Asign this quantity to the particular aircraft in column total_seat_cnt
-*/
-    SELECT 
-        s.aircraft_code,
-        count(s.seat_no) AS total_seat_cnt
+*/ SELECT s.aircraft_code,
+          count(s.seat_no) AS total_seat_cnt
    FROM dst_project.seats s
    JOIN dst_project.aircrafts ar ON s.aircraft_code = ar.aircraft_code
    GROUP BY 1) sub1
@@ -281,26 +277,17 @@ JOIN dst_project.flights f ON sub1.aircraft_code = f.aircraft_code
 FULL JOIN dst_project.airports apts ON apts.airport_code = f.arrival_airport
 FULL JOIN dst_project.aircrafts acrft ON acrft.aircraft_code = f.aircraft_code
 LEFT JOIN
-(
-/*
+  (/*
 create a sub-quey to identify
 how much money was payed per flight
-*/
-SELECT 
-      t.flight_id,
-      sum(t.amount) as sum_per_flight
-FROM dst_project.ticket_flights t
-group by 1
-) as sub2 on sub2.flight_id = f.flight_id
+*/ SELECT t.flight_id,
+          sum(t.amount) AS sum_per_flight
+   FROM dst_project.ticket_flights t
+   GROUP BY 1) AS sub2 ON sub2.flight_id = f.flight_id
 LEFT JOIN
-(
--- how many occupied seats in the flight
-select 
-    bp.flight_id,
-    count(seat_no) as occ_seats
-FROM dst_project.boarding_passes bp
-group by 1
-) as sub3 on sub3.flight_id = f.flight_id
-
+  (-- how many occupied seats in the flight
+SELECT bp.flight_id,
+       count(seat_no) AS occ_seats
+   FROM dst_project.boarding_passes bp
+   GROUP BY 1) AS sub3 ON sub3.flight_id = f.flight_id
 WHERE f.departure_airport = 'AAQ'
-
