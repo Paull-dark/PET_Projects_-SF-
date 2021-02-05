@@ -242,10 +242,8 @@ JOIN dst_project.seats s ON s.aircraft_code = ac.aircraft_code
 WHERE f.departure_airport = 'AAQ'
 GROUP BY 1
  
+PROJECT: DATASET PREPARATION
 
-
-
-DATASET PREPARATION
 
 SELECT f.flight_id,
        f.flight_no,
@@ -255,8 +253,6 @@ SELECT f.flight_id,
        f.scheduled_departure,
        f.scheduled_arrival,
        f.status,
-       apts.longitude AS arival_longitude,
-       apts.latitude AS arival_latitude,
        acrft.model,
        sub1.total_seat_cnt,
        sub3.occ_seats,
@@ -291,3 +287,4 @@ SELECT bp.flight_id,
    FROM dst_project.boarding_passes bp
    GROUP BY 1) AS sub3 ON sub3.flight_id = f.flight_id
 WHERE f.departure_airport = 'AAQ'
+  AND status not in ('Cancelled')
