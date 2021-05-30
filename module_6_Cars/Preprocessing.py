@@ -121,8 +121,13 @@ df_test['car_passport'] = df_test['car_passport'].map(
 df_test['wheel_location'] = df_test['wheel_location'].map(
     {'Левый': 'LEFT', 'Правый': 'RIGHT'})
 
+mers = ['Mercedes-Benz']
+# Make replacemewnt
+df_train.loc[df_train['brand'].isin(mers), 'brand'] = 'MERCEDES'
+
+
+
+
+
 df_combined = df_test.append(df_train, sort=False).reset_index(
     drop=True)  # combine sets
-
-for i in df_combined.columns:
-    print(i)
